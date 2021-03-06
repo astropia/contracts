@@ -31,7 +31,7 @@ contract Astropia {
 
   struct Crystal {
     uint256 amount;
-    uint256 lastMiningtime;
+    uint256 lastMiningTime;
     uint256 investment;
   }
   mapping (address => Crystal) internal _crystals;
@@ -65,8 +65,8 @@ contract Astropia {
 
   function crystalOf (address _player) public view returns (uint256) {
     Crystal storage c = _crystals[_player];
-    require(block.timestamp > c.lastMiningtime);
-    return c.amount + (block.timestamp - c.lastMiningtime) * c.investment.energy();
+    require(block.timestamp > c.lastMiningTime);
+    return c.amount + (block.timestamp - c.lastMiningTime) * c.investment.energy();
   }
 
   function allCardsOf (address _player) public view returns (bytes32[] memory cards) {
@@ -78,20 +78,40 @@ contract Astropia {
     }
   }
 
+  function cardInfo (uint256 _cardID) public view returns (
+    address owner,
+    uint256 balance,
+    uint256 exp,
+    address workAt,
+    uint256 workID
+  ) {
+    owner = _tokenOwner[_cardID];
+    Card storage card = _cards[_cardID];
+    balance = card.balance;
+    exp = card.exp;
+    workAt = card.workAt;
+    workID = card.workID;
+  }
+
+  function cardBufferOf (uint256 _cardID) public view returns (uint256) {
+    Card storage card = _cards[_cardID];
+    return card.exp + card.balance / 1e16;
+  }
+
   function updateCrystalOf (address _player) internal returns (Crystal storage) {
     Crystal storage c = _crystals[_player];
     uint256 ts = block.timestamp;
-    require(ts > c.lastMiningtime);
-    c.amount += (ts - c.lastMiningtime) * c.investment.energy();
-    c.lastMiningtime = ts;
+    require(ts > c.lastMiningTime);
+    c.amount += (ts - c.lastMiningTime) * c.investment.energy();
+    c.lastMiningTime = ts;
     return c;
   }
 
-  function setwhitelist(address _addr, bool _states) external onlyGod {
+  function setWhitelist(address _addr, bool _states) external onlyGod {
     whitelist[_addr] = _states;
   }
 
-  function invest() external payable {
+  function invest() public payable {
     Crystal storage c = updateCrystalOf(msg.sender);
     c.investment += msg.value;
   }
@@ -127,12 +147,22 @@ contract Astropia {
     msg.sender.transfer(_amount);
   }
 
-  function work(uint256 _cardID, uint256 _exp; address _workAt, uint256 _workID) external onlyWhitelist {
-    require(_tokenOwner[_cardID] != address(0));
+  function ownerOf(uint256 _cardID) external view returns (address) {
+    return _tokenOwner[_cardID];
+  }
+
+  function work(uint256 _cardID, address _workAt, uint256 _workID) external onlyWhitelist {
     Card storage card = _cards[_cardID];
-    card.exp += _exp;
+    require(card.workID == 0);
     card.workAt = _workAt;
     card.workID = _workID;
+  }
+
+  function workEnd(uint256 _cardID, uint256 exp) external onlyWhitelist {
+    Card storage card = _cards[_cardID];
+    card.exp += exp;
+    card.workAt = address(0);
+    card.workID = 0;
   }
 
   function _mint(uint256 _type, address _player) internal {
@@ -156,5 +186,9 @@ contract Astropia {
     _playersCards[_player][i] = tokenID;
 
     // emit Transfer(address(0), _player, tokenID);
+  }
+
+  receive() external payable {
+    invest();
   }
 }
