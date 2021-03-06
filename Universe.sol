@@ -94,6 +94,7 @@ contract Universe {
     e.member = _cardID;
     e.memberFrom = _astropia;
     e.salt = origin.random(abi.encode(leader, _cardID));
+    e.ongoing = true;
     e.startAt = block.timestamp;
 
     uint256 index = _pendingExplorationsIndex[_eID];
@@ -129,11 +130,19 @@ contract Universe {
   }
   
   function itemsOf(address _player) external view returns (uint256[] memory) {
-      return _items[_player];
+    return _items[_player];
+  }
+  
+  function allPendingExps() external view returns (uint256[] memory es) {
+    es = new uint256[](_pendingExplorationsCount);
+    for (uint256 i = 0; i < _pendingExplorationsCount; i++) {
+        es[i] = _pendingExplorations[i];
+    }
   }
 
   function end(uint256 _eID) external {
     Exploration storage e = _explorations[_eID];
+    require(e.ongoing);
     bool isLeader = false;
     bool checked = false;
 
@@ -162,6 +171,7 @@ contract Universe {
 
   function rageEnd(uint256 _eID) external {
     Exploration storage e = _explorations[_eID];
+    require(e.ongoing);
     require(e.leaderFrom.ownerOf(e.leader) == msg.sender || e.memberFrom.ownerOf(e.member) == msg.sender);
     
     e.ongoing = false;
