@@ -26,8 +26,9 @@ contract Astropia {
     uint256 cardDrawingCount;
   }
   mapping (address => Player) internal _players;
-  mapping (address => uint256) internal _playersCardsCount; 
-  mapping (address => mapping(uint256 => uint256)) internal _playersCards; 
+  mapping (address => uint256) internal _playersCardsCount;
+  mapping (address => mapping(uint256 => uint256)) internal _playersCards;
+  mapping (address => mapping(uint256 => uint256)) internal _playersCardsIndex;
 
   struct Crystal {
     uint256 amount;
@@ -147,7 +148,7 @@ contract Astropia {
     msg.sender.transfer(_amount);
   }
 
-  function ownerOf(uint256 _cardID) external view returns (address) {
+  function ownerOf(uint256 _cardID) public view returns (address) {
     return _tokenOwner[_cardID];
   }
 
@@ -184,11 +185,34 @@ contract Astropia {
 
     uint256 i = _playersCardsCount[_player]++;
     _playersCards[_player][i] = tokenID;
+    _playersCardsIndex[_player][tokenID] = i;
 
     // emit Transfer(address(0), _player, tokenID);
   }
 
   receive() external payable {
     invest();
+  }
+
+  // ERC721
+  function transferFrom(address _from, address _to, uint256 _tokenId) external payable {
+    require(ownerOf(_tokenId) == _from);
+    require(_from != address(0));
+    require(_to != address(0));
+
+    Card storage card = _cards[_tokenId];
+    require(card.workAt == address(0));
+
+    uint256 o = _playersCardsIndex[_from][_tokenId];
+    _playersCardsCount[_from]--;
+    uint256 tail = _playersCards[_from][_playersCardsCount[_from]];
+    _playersCards[_from][o] = tail;
+    _playersCardsIndex[_from][tail] = o;
+
+    uint256 i = _playersCardsCount[_to]++;
+    _playersCards[_to][i] = _tokenId;
+    _playersCardsIndex[_to][_tokenId] = i;
+
+    _tokenOwner[_tokenId] = _to;
   }
 }
