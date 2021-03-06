@@ -139,6 +139,23 @@ contract Universe {
         es[i] = _pendingExplorations[i];
     }
   }
+  
+  function allPendingExpsDetail() external view returns (
+    uint256[] memory es,
+    uint256[] memory aims,
+    uint256[] memory leaders
+  ) {
+    es = new uint256[](_pendingExplorationsCount);
+    aims = new uint256[](_pendingExplorationsCount);
+    leaders = new uint256[](_pendingExplorationsCount);
+    for (uint256 i = 0; i < _pendingExplorationsCount; i++) {
+      uint256 eID = _pendingExplorations[i];
+      es[i] = eID;
+      Exploration storage e = _explorations[eID];
+      aims[i] = e.aim;
+      leaders[i] = e.leader;
+    }
+  }
 
   function end(uint256 _eID) external {
     Exploration storage e = _explorations[_eID];

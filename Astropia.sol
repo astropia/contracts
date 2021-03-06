@@ -14,7 +14,7 @@ library Math {
 contract Astropia {
   using Math for uint256;
 
-  uint256 constant CARD_PRICE = 500000000;
+  uint256 constant CARD_PRICE = 5e20;
   bytes private constant zeroBytes = new bytes(0x00);
 
   address payable public god;
@@ -64,18 +64,25 @@ contract Astropia {
     _;
   }
 
-  function crystalOf (address _player) public view returns (uint256) {
+  function crystalOf (address _player) public view returns (uint256 amount, uint256 investment) {
     Crystal storage c = _crystals[_player];
     require(block.timestamp > c.lastMiningTime);
-    return c.amount + (block.timestamp - c.lastMiningTime) * c.investment.energy();
+    amount = c.amount + (block.timestamp - c.lastMiningTime) * c.investment.energy();
+    investment = c.investment;
   }
 
-  function allCardsOf (address _player) public view returns (bytes32[] memory cards) {
+  function allCardsOf (address _player) public view returns (
+    uint256[] memory cards,
+    uint256[] memory workIDs
+  ) {
     uint256 max = _playersCardsCount[_player];
     mapping(uint256 => uint256) storage c = _playersCards[_player];
-    cards = new bytes32[](max);
+    cards = new uint256[](max);
+    workIDs = new uint256[](max);
     for (uint256 i = 0; i < max; i++) {
-      cards[i] = bytes32(c[i]);
+      uint256 cID = c[i];
+      cards[i] = cID;
+      workIDs[i] = _cards[cID].workID;
     }
   }
 
@@ -119,14 +126,14 @@ contract Astropia {
 
   function divest(uint256 _amount) external {
     Crystal storage c = updateCrystalOf(msg.sender);
-    require(c.investment > _amount);
+    require(c.investment >= _amount);
     c.investment -= _amount;
     msg.sender.transfer(_amount);
   }
 
   function mint(uint8 _type) external {
     Crystal storage c = updateCrystalOf(msg.sender);
-    require(_type > 0 && _type < 4);
+    require(_type > 0 && _type < 5);
     uint256 price = _type * CARD_PRICE;
     require(c.amount >= price);
     c.amount -= price;
@@ -173,7 +180,7 @@ contract Astropia {
     lucky = lucky * _type / (_type + 1);
 
     uint256 speed = tokenID >> 8 & 0xff;
-    speed = speed * _type * 4 / (_type + 1) / 3;
+    speed = speed * _type * 5 / (_type + 1) / 4;
     speed = (speed * speed * speed) >> 16;
 
     tokenID = tokenID & ~uint256(0xffffff) | speed << 8 | lucky;
