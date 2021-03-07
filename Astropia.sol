@@ -183,7 +183,7 @@ contract Astropia {
     speed = speed * _type * 5 / (_type + 1) / 4;
     speed = (speed * speed * speed) >> 16;
 
-    tokenID = tokenID & ~uint256(0xffffff) | speed << 8 | lucky;
+    tokenID = tokenID & ~uint256(0xffffffff) | _type << 16 | speed << 8 | lucky;
 
     require(_tokenOwner[tokenID] == address(0));
     _tokenOwner[tokenID] = _player;
