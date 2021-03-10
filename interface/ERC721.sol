@@ -210,8 +210,8 @@ contract ERC721 is ERC165 {
     fromTokens[_tokenIndex[_tokenId]] = fromTokens[fromTokens.length - 1];
     fromTokens.pop();
 
+    _tokenIndex[_tokenId] = toTokens.length;
     toTokens.push(_tokenId);
-    _tokenIndex[_tokenId] = toTokens.length - 1;
 
     emit Transfer(_from, _to, _tokenId);
 
