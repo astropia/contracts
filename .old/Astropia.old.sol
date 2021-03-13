@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.7.0;
 
-import { Origin } from "./lib/Origin.sol";
-import { ERC721 } from "./interface/ERC721.sol";
+import { Origin } from "../lib/Origin.sol";
+import { ERC721 } from "../interface/ERC721.sol";
 
 library Math {
   // TODO

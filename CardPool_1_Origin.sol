@@ -15,8 +15,8 @@ contract CardPool_1 {
   using Math for uint256;
 
   uint256 constant CARD_PRICE = 5e20;
-  uint256 constant MASK = 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-  uint256 constant CARD_POOL_1 = 0x0001000000000000000000000000000000000000000000000000000000000000;
+  uint256 constant MASK        = 0x0000000000000000000000000000000000000011111111111111111111111111;
+  uint256 constant CARD_POOL_1 = 0x10000000000000417374726f7069617200010000000000000000000000000000;
 
   Origin public origin;
   Astropia public astropia;
@@ -68,9 +68,9 @@ contract CardPool_1 {
   function _mint(uint16 _type, address _player) internal {
     uint256 tokenId = origin.random(abi.encode(_player));
 
-    tokenId = tokenId & MASK | CARD_POOL_1 | _type << 224;
+    tokenId = tokenId & MASK | CARD_POOL_1 | _type << 104;
 
-    astropia.mint(_player, tokenId);
+    astropia.mintNFT(_player, tokenId);
   }
 
   function _updateCrystalOf (address _player) internal returns (Crystal storage) {
