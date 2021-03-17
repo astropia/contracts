@@ -1,4 +1,4 @@
-// https://github.com/enjin/erc-1155/blob/master/contracts/ERC1155MixedFungible.sol Updated
+// https://github.com/enjin/erc-1155/blob/master/contracts/ERC1155MixedFungible.sol Modified by tari404
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.0;
 
@@ -14,11 +14,11 @@ contract ERC1155MixedFungible is ERC1155 {
     using Address for address;
 
     // Use a split bit implementation.
-    // Store the type in the upper 128 bits..
-    uint256 constant TYPE_MASK = uint256(uint128(~0)) << 128;
+    // Store the type in the upper 112 bits..
+    uint256 constant TYPE_MASK = uint256(uint112(~0)) << 144;
 
-    // ..and the non-fungible index in the lower 128
-    uint256 constant NF_INDEX_MASK = uint128(~0);
+    // ..and the non-fungible index in the lower 144
+    uint256 constant NF_INDEX_MASK = uint144(~0);
 
     // The top bit is a flag to tell if this is a NFI.
     uint256 constant TYPE_NF_BIT = 1 << 255;

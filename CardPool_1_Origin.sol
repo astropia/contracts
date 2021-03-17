@@ -15,8 +15,8 @@ contract CardPool_1 {
     using Math for uint256;
 
     uint256 constant CARD_PRICE = 5e20;
-    uint256 constant MASK        = 0x0000000000000000000000000000000000000011111111111111111111111111;
-    uint256 constant CARD_POOL_1 = 0x10000000000000417374726f7069617200010000000000000000000000000000;
+    uint256 constant MASK        = 0x0000000000000000000000000000000000111111111111111111111111111111;
+    uint256 constant CARD_POOL_1 = 0x8000000000417374726f70696172000100000000000000000000000000000000;
 
     Origin public origin;
     Astropia public astropia;
@@ -55,7 +55,7 @@ contract CardPool_1 {
         msg.sender.transfer(_amount);
     }
 
-    function mint(uint16 _type) external {
+    function mint(uint8 _type) external {
         Crystal storage c = _updateCrystalOf(msg.sender);
         require(_type > 0 && _type < 5);
         uint256 price = _type * CARD_PRICE;
@@ -65,10 +65,10 @@ contract CardPool_1 {
         _mint(_type, msg.sender);
     }
 
-    function _mint(uint16 _type, address _player) internal {
+    function _mint(uint8 _type, address _player) internal {
         uint256 tokenId = origin.random(abi.encode(_player));
 
-        tokenId = tokenId & MASK | CARD_POOL_1 | _type << 104;
+        tokenId = tokenId & MASK | CARD_POOL_1 | _type << 120;
 
         astropia.mintNFT(_player, tokenId);
     }
