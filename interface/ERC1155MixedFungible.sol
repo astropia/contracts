@@ -28,17 +28,19 @@ contract ERC1155MixedFungible is ERC1155 {
     mapping (uint256 => uint256) internal _nfIndex;
     mapping (address => mapping(uint256 => uint256[])) internal _nft;
 
+    mapping (uint256 => )
+
     // Only to make code clearer. Should not be functions
     function isNonFungible(uint256 _id) public pure returns(bool) {
         return _id & TYPE_NF_BIT == TYPE_NF_BIT;
     }
     function isFungible(uint256 _id) public pure returns(bool) {
-        return _id & TYPE_NF_BIT == 0;
+        return (_id & TYPE_NF_BIT == 0) && (_id & NF_INDEX_MASK == 0);
     }
     function getNonFungibleIndex(uint256 _id) public pure returns(uint256) {
         return _id & NF_INDEX_MASK;
     }
-    function getNonFungibleBaseType(uint256 _id) public pure returns(uint256) {
+    function getBaseType(uint256 _id) public pure returns(uint256) {
         return _id & TYPE_MASK;
     }
     function isNonFungibleBaseType(uint256 _id) public pure returns(bool) {
@@ -130,7 +132,7 @@ contract ERC1155MixedFungible is ERC1155 {
         require(_value == 1);
         require(_nfOwners[_id] == _from);
 
-        uint256 baseType = getNonFungibleBaseType(_id);
+        uint256 baseType = getBaseType(_id);
 
         if (_from != address(0)) {
             uint256[] storage fromTokens = _nft[_from][baseType];

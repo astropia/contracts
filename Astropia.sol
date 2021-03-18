@@ -15,9 +15,9 @@ contract Astropia is ERC1155MixedFungible
 
     mapping (address => bool) public isGameZone;
     mapping (address => uint16) public tokenMiner;
-    mapping (uint128 => bool) public isLegalToken;
+    mapping (uint256 => bool) internal _legalToken;
 
-    // TODO: Metadata
+    mapping (uint256 => mapping (uint8 => uint160)) internal _metadata;
 
     constructor() {
         god = msg.sender;
@@ -38,12 +38,21 @@ contract Astropia is ERC1155MixedFungible
         _;
     }
 
+    function metadataOf(uint256 _nftId, uint8 _mIndex) view public returns (uint160) {
+        return _metadata[_nftId][_mIndex];
+    }
+
+    function isLegalToken(uint256 _id) view public returns (bool) {
+        return _legalToken[getBaseType(_id)];
+    }
+
     function setGameZone(address _addr, bool _states) external onlyGod {
         isGameZone[_addr] = _states;
     }
 
-    function setLegalToken(uint128 _tokenType, bool _states) external onlyGod {
-        isLegalToken[_tokenType] = _states;
+    function setLegalToken(uint256 _tokenType, bool _states) external onlyGod {
+        require(getBaseType(_tokenType) == _tokenType);
+        _legalToken[_tokenType] = _states;
     }
 
     function setFactory(address _addr, uint16 _index) external onlyGod {
@@ -51,14 +60,15 @@ contract Astropia is ERC1155MixedFungible
     }
 
     function mintNFT(address _to, uint256 _tokenId) external onlyByMiner {
-        require(isNonFungible(_tokenId));
-        // require(_nfOwners[_tokenId] == address(0));
+        require(isNonFungibleItem(_tokenId));
+        require(isLegalToken(_tokenId));
 
         uint256 nfType = getNonFungibleBaseType(_tokenId);
         require(nfType != _tokenId);
 
         require(_tokenId & MINER_MASK == 0);
         uint256 tokenIdWithMiner = _tokenId | tokenMiner[msg.sender] << 128;
+        require(_nfOwners[tokenIdWithMiner] == address(0));
 
         _transferNonFungibleToken(address(0), _to, tokenIdWithMiner, 1);
 
@@ -71,6 +81,7 @@ contract Astropia is ERC1155MixedFungible
 
     function mintFT(address _to, uint256 _tokenId, uint256 _amount) external onlyByMiner {
         require(isFungible(_tokenId));
+        require(isLegalToken(_tokenId));
 
         balances[_tokenId][_to] = balances[_tokenId][_to].add(_amount);
 
@@ -79,6 +90,12 @@ contract Astropia is ERC1155MixedFungible
         if (_to.isContract()) {
             _doSafeTransferAcceptanceCheck(msg.sender, address(0), _to, _tokenId, _amount, "");
         }
+    }
+
+    function updateMetaData(uint256 _nftId, uint8 _mIndex, uint160 _data) external onlyInGameZone {
+        require(isNonFungibleItem(_nftId));
+        require(_nfOwners[_nftId] != address(0));
+        _metadata[_nftId][_mIndex] = _data;
     }
 
     function allNonFungibleOf(address _owner, uint256 _type) external view returns (uint256[] memory) {
