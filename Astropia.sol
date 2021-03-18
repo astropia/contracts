@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.7.0;
+pragma solidity 0.7.4;
 
 import { Origin } from "./lib/Origin.sol";
 import "./interface/ERC1155MixedFungible.sol";
@@ -42,6 +42,14 @@ contract Astropia is ERC1155MixedFungible
         return _metadata[_nftId][_mIndex];
     }
 
+    function multiMetadataOf(uint256 _nftId, uint8[] memory _mIndex) view public returns (uint160[] memory list) {
+        list = new uint160[](_mIndex.length);
+        mapping (uint8 => uint160) storage allData = _metadata[_nftId];
+        for (uint256 i = 0; i < _mIndex.length; i++) {
+            list[i] = allData[_mIndex[i]];
+        }
+    }
+
     function isLegalToken(uint256 _id) view public returns (bool) {
         return _legalToken[getBaseType(_id)];
     }
@@ -59,15 +67,15 @@ contract Astropia is ERC1155MixedFungible
         tokenMiner[_addr] = _index;
     }
 
-    function mintNFT(address _to, uint256 _tokenId) external onlyByMiner {
+    function mintNFT(address _to, uint256 _tokenId) external onlyByMiner returns (uint256) {
         require(isNonFungibleItem(_tokenId));
         require(isLegalToken(_tokenId));
 
-        uint256 nfType = getNonFungibleBaseType(_tokenId);
+        uint256 nfType = getBaseType(_tokenId);
         require(nfType != _tokenId);
 
         require(_tokenId & MINER_MASK == 0);
-        uint256 tokenIdWithMiner = _tokenId | tokenMiner[msg.sender] << 128;
+        uint256 tokenIdWithMiner = _tokenId | uint256(tokenMiner[msg.sender]) << 128;
         require(_nfOwners[tokenIdWithMiner] == address(0));
 
         _transferNonFungibleToken(address(0), _to, tokenIdWithMiner, 1);
@@ -77,6 +85,8 @@ contract Astropia is ERC1155MixedFungible
         if (_to.isContract()) {
             _doSafeTransferAcceptanceCheck(msg.sender, address(0), _to, tokenIdWithMiner, 1, "");
         }
+
+        return tokenIdWithMiner;
     }
 
     function mintFT(address _to, uint256 _tokenId, uint256 _amount) external onlyByMiner {
@@ -92,7 +102,7 @@ contract Astropia is ERC1155MixedFungible
         }
     }
 
-    function updateMetaData(uint256 _nftId, uint8 _mIndex, uint160 _data) external onlyInGameZone {
+    function updateMetadata(uint256 _nftId, uint8 _mIndex, uint160 _data) external onlyInGameZone {
         require(isNonFungibleItem(_nftId));
         require(_nfOwners[_nftId] != address(0));
         _metadata[_nftId][_mIndex] = _data;

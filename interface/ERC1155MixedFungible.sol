@@ -28,8 +28,6 @@ contract ERC1155MixedFungible is ERC1155 {
     mapping (uint256 => uint256) internal _nfIndex;
     mapping (address => mapping(uint256 => uint256[])) internal _nft;
 
-    mapping (uint256 => )
-
     // Only to make code clearer. Should not be functions
     function isNonFungible(uint256 _id) public pure returns(bool) {
         return _id & TYPE_NF_BIT == TYPE_NF_BIT;

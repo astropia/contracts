@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.7.0;
+pragma solidity 0.7.4;
 
 import { Origin } from "./lib/Origin.sol";
 import { Astropia } from "./Astropia.sol";
@@ -14,9 +14,13 @@ library Math {
 contract CardPool_1 {
     using Math for uint256;
 
-    uint256 constant CARD_PRICE = 5e20;
-    uint256 constant MASK        = 0x0000000000000000000000000000000000111111111111111111111111111111;
+    uint256 constant MASK        = 0x0000000000000000000000000000000000ffffffffffffffffffffffffffffff;
     uint256 constant CARD_POOL_1 = 0x8000000000417374726f70696172000000000000000000000000000000000000;
+
+    address payable public god;
+
+    mapping (uint8 => uint256) public cardPrice;
+    mapping (uint8 => uint256) public cardFoundation;
 
     Origin public origin;
     Astropia public astropia;
@@ -30,10 +34,18 @@ contract CardPool_1 {
     }
     mapping (address => Crystal) internal _crystals;
 
+    event Card (uint8 indexed _type, uint256 _price, uint256 _foundation);
+
     constructor(Origin _o, Astropia _a) {
+        god = msg.sender;
         origin = _o;
         astropia = _a;
         origin.random("");
+    }
+
+    modifier onlyGod() {
+        require(msg.sender == god);
+        _;
     }
 
     function crystalOf (address _player) public view returns (uint256 amount, uint256 investment) {
@@ -41,6 +53,13 @@ contract CardPool_1 {
         require(block.timestamp > c.lastMiningTime);
         amount = c.amount + (block.timestamp - c.lastMiningTime) * c.investment.energy();
         investment = c.investment;
+    }
+
+    function setCardInfo (uint8 _type, uint256 _price, uint256 _foundation) external onlyGod {
+        cardPrice[_type] = _price;
+        cardFoundation[_type] = _foundation;
+
+        emit Card(_type, _price, _foundation);
     }
 
     function invest() public payable {
@@ -56,21 +75,35 @@ contract CardPool_1 {
     }
 
     function mint(uint8 _type) external {
+        uint256 price = cardPrice[_type];
+        require(price > 0);
         Crystal storage c = _updateCrystalOf(msg.sender);
-        require(_type > 0 && _type < 5);
-        uint256 price = _type * CARD_PRICE;
         require(c.amount >= price);
         c.amount -= price;
+
         _cardDrawingCounts[msg.sender]++;
-        _mint(_type, msg.sender);
+
+        uint256 id = _mint(_type, msg.sender);
+        _initMetadata(id, _type);
     }
 
-    function _mint(uint8 _type, address _player) internal {
+    function _mint(uint8 _type, address _player) internal returns (uint256) {
         uint256 tokenId = origin.random(abi.encode(_player));
 
-        tokenId = tokenId & MASK | CARD_POOL_1 | _type << 120;
+        tokenId = tokenId & MASK | CARD_POOL_1 | uint256(_type) << 120;
 
-        astropia.mintNFT(_player, tokenId);
+        uint256 newId = astropia.mintNFT(_player, tokenId);
+        return newId;
+    }
+
+    function _initMetadata(uint256 _id, uint8 _type) internal {
+        uint256 f = cardFoundation[_type];
+        uint256 r = origin.random(abi.encode(_id));
+
+        uint256 power = f * uint16(r) / (1 << 16) + f;
+
+        require(uint160(power) == power);
+        astropia.updateMetadata(_id, 0, uint160(power));
     }
 
     function _updateCrystalOf (address _player) internal returns (Crystal storage) {

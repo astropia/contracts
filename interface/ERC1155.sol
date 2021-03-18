@@ -109,7 +109,7 @@ contract ERC1155 is IERC1155, ERC165
     */
     bytes4 constant private INTERFACE_SIGNATURE_ERC1155 = 0xd9b67a26;
 
-    function supportsInterface(bytes4 _interfaceId) override public view returns (bool) {
+    function supportsInterface(bytes4 _interfaceId) override public pure returns (bool) {
         if (_interfaceId == INTERFACE_SIGNATURE_ERC165 || _interfaceId == INTERFACE_SIGNATURE_ERC1155) {
             return true;
         }
@@ -133,7 +133,7 @@ contract ERC1155 is IERC1155, ERC165
         @param _value   Transfer amount
         @param _data    Additional data with no specified format, MUST be sent unaltered in call to `onERC1155Received` on `_to`
     */
-    function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _value, bytes calldata _data) override external {
+    function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _value, bytes calldata _data) virtual override external {
 
         require(_to != address(0x0), "_to must be non-zero.");
         require(_from == msg.sender || operatorApproval[_from][msg.sender] == true, "Need operator approval for 3rd party transfers.");
@@ -169,7 +169,7 @@ contract ERC1155 is IERC1155, ERC165
         @param _values  Transfer amounts per token type (order and length must match _ids array)
         @param _data    Additional data with no specified format, MUST be sent unaltered in call to the `ERC1155TokenReceiver` hook(s) on `_to`
     */
-    function safeBatchTransferFrom(address _from, address _to, uint256[] calldata _ids, uint256[] calldata _values, bytes calldata _data) override external {
+    function safeBatchTransferFrom(address _from, address _to, uint256[] calldata _ids, uint256[] calldata _values, bytes calldata _data) virtual override external {
 
         // MUST Throw on errors
         require(_to != address(0x0), "destination address must be non-zero.");
@@ -207,7 +207,7 @@ contract ERC1155 is IERC1155, ERC165
         @param _id     ID of the Token
         @return        The _owner's balance of the Token type requested
      */
-    function balanceOf(address _owner, uint256 _id) override external view returns (uint256) {
+    function balanceOf(address _owner, uint256 _id) virtual override external view returns (uint256) {
         // The balance of any account can be calculated from the Transfer events history.
         // However, since we need to keep the balances to validate transfer request,
         // there is no extra cost to also privide a querry function.
@@ -221,7 +221,7 @@ contract ERC1155 is IERC1155, ERC165
         @param _ids    ID of the Tokens
         @return        The _owner's balance of the Token types requested (i.e. balance for each (owner, id) pair)
      */
-    function balanceOfBatch(address[] calldata _owners, uint256[] calldata _ids) override external view returns (uint256[] memory) {
+    function balanceOfBatch(address[] calldata _owners, uint256[] calldata _ids) virtual override external view returns (uint256[] memory) {
 
         require(_owners.length == _ids.length);
 
