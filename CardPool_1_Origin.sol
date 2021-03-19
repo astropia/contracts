@@ -11,18 +11,19 @@ library Math {
     }
 }
 
-contract CardPool_1 {
+contract CardPool_1
+{
     using Math for uint256;
 
-    uint256 constant MASK        = 0x0000000000000000000000000000000000ffffffffffffffffffffffffffffff;
-    uint256 constant CARD_POOL_1 = 0x8000000000417374726f70696172000000000000000000000000000000000000;
+    uint256 constant private MASK        = 0x0000000000000000000000000000000000ffffffffffffffffffffffffffffff;
+    uint256 constant private CARD_POOL_1 = 0x8000000000417374726f70696172000000000000000000000000000000000000;
 
     address payable public god;
 
     mapping (uint8 => uint256) public cardPrice;
     mapping (uint8 => uint256) public cardFoundation;
 
-    Origin public origin;
+    Origin public originLib;
     Astropia public astropia;
 
     mapping (address => uint256) internal _cardDrawingCounts;
@@ -38,9 +39,9 @@ contract CardPool_1 {
 
     constructor(Origin _o, Astropia _a) {
         god = msg.sender;
-        origin = _o;
+        originLib = _o;
         astropia = _a;
-        origin.random("");
+        originLib.random("");
     }
 
     modifier onlyGod() {
@@ -88,7 +89,7 @@ contract CardPool_1 {
     }
 
     function _mint(uint8 _type, address _player) internal returns (uint256) {
-        uint256 tokenId = origin.random(abi.encode(_player));
+        uint256 tokenId = originLib.random(abi.encode(_player));
 
         tokenId = tokenId & MASK | CARD_POOL_1 | uint256(_type) << 120;
 
@@ -98,7 +99,7 @@ contract CardPool_1 {
 
     function _initMetadata(uint256 _id, uint8 _type) internal {
         uint256 f = cardFoundation[_type];
-        uint256 r = origin.random(abi.encode(_id));
+        uint256 r = originLib.random(abi.encode(_id));
 
         uint256 power = f * uint16(r) / (1 << 16) + f;
 

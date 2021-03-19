@@ -9,7 +9,7 @@ contract Astropia is ERC1155MixedFungible
     using SafeMath for uint256;
     using Address for address;
 
-    uint256 constant MINER_MASK = uint256(uint16(~0)) << 128;
+    uint256 constant private MINER_MASK = uint256(uint16(~0)) << 128;
 
     address payable public god;
 
@@ -105,7 +105,13 @@ contract Astropia is ERC1155MixedFungible
     function updateMetadata(uint256 _nftId, uint8 _mIndex, uint160 _data) external onlyInGameZone {
         require(isNonFungibleItem(_nftId));
         require(_nfOwners[_nftId] != address(0));
-        _metadata[_nftId][_mIndex] = _data;
+        mapping (uint8 => uint160) storage metadata = _metadata[_nftId];
+        uint160 senderInNumber = uint160(msg.sender);
+        require(metadata[255] == 0 || metadata[255] == senderInNumber);
+        if (_mIndex == 255) {
+            require(_data == 0 || _data == senderInNumber);
+        }
+        metadata[_mIndex] = _data;
     }
 
     function allNonFungibleOf(address _owner, uint256 _type) external view returns (uint256[] memory) {

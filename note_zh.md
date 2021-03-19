@@ -4,6 +4,16 @@
 
 [Astropia.sol](./Astropia.sol)是管理游戏几乎所有资产（包括非同质化的角色、装备及同质化的游戏内货币、点数等）的[ERC1155](https://eips.ethereum.org/EIPS/eip-1155)智能合约，允许经过批准的（游戏逻辑）合约铸造新的NFT/FT。
 
+### Metadata 元数据
+
+为了拓展游戏资产在链上合约间交互时的内容，在合约中对每一个NFT挂载一个`uint160` * 256大小的metadata（原则上也允许对FT的类型挂载一个metadata，但是可能没有太大的实际意义）。这些数据允许Astropia合约内标记为`isGameZone`的其他合约对其进行修改。对于每一类资产，应当在其JSON Schema中描述其metadata中储存的数据的含义；对于所有资产，应当在设计metadata布局时尽量保证同样的 mIndex(0 ~ 255) 对应的`uint160`数据的含义尽量相似。
+
+> 选择`uint160`作为储存metadata的格式主要是考虑可以直接和`address`类型转换，这样在metadata中储存地址信息（可以预见到这会经常发生）时更加直接，而避免在metadata的格式定义时还要考虑数据的偏移位置。
+
+| mIndex | 名称 | 规则 |
+| - | - | - |
+| 255 | metadata锁 | 当该信息为0时，对于修改metadata的权限不做限制；反之，则只允许该信息对应的合约/账户对于所有metadata进行更改。当更新该信息时，仅允许被设置为0，或者`msg.sender`值，以防死锁。 |
+
 ### Token ID规则
 
 为管理和区分不同Token，合约中使用`uint256`格式记录的Token Type ID加以区分。规定其值的最高位索引为1，最低位索引为256，对ID中各位信息的含义及铸币合约应该遵守的规范进行规定：
@@ -38,3 +48,5 @@
 ## CardPool #1
 
 [CardPool_1_Origin.sol](./CardPool_1_Origin.sol)是第一期卡池的铸币合约，仅生产一种NFT：Asrtopiar——即游戏内的初始人物卡牌。
+
+> 由于还未获取具体的世界观和数值维度等设定，暂时测试中规定人物的元数据仅有一个【能量值】，储存在m1的元数据字段
