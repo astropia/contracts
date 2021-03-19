@@ -6,10 +6,22 @@ import { Astropia } from "./Astropia.sol";
 import { ERC165 } from "./interface/ERC165.sol";
 import { ERC1155TokenReceiver } from "./interface/IERC1155TokenReceiver.sol";
 
+library Address
+{
+    function isNotContract(address account) internal view returns (bool) {
+        uint256 size;
+        assembly { size := extcodesize(account) }
+        return size == 0;
+    }
+}
+
 contract Spica is ERC1155TokenReceiver, ERC165
 {
+    using Address for address;
+
     bytes4 constant private CREATE = 0x81d0974d; // keccak256("CREATE()")
     bytes4 constant private JOIN = 0x725e42cb; // keccak256("JOIN(uint256)")
+    bytes4 constant private BACK = 0x2a78c040; // keccak256("BACK()")
 
     Origin public originLib;
     Astropia public astropia;
@@ -78,6 +90,7 @@ contract Spica is ERC1155TokenReceiver, ERC165
         uint256,
         bytes memory _data
     ) override external returns(bytes4) {
+        require(_from.isNotContract());
         require(msg.sender == address(astropia), "only accept tokens in Astropia contract");
         // There is no need to check the ownership of the token because the Astropia is always right.
 
@@ -110,6 +123,36 @@ contract Spica is ERC1155TokenReceiver, ERC165
         bytes memory
     ) override pure external returns(bytes4) {
         revert();
+    }
+
+
+    function end(uint256 _eID) external {
+        Exploration storage e = _explorations[_eID];
+        require(e.ongoing);
+        bool isLeader = false;
+        bool checked = false;
+
+        if (e.leaderOwner == msg.sender) {
+            isLeader = true;
+            checked = true;
+        } else if (e.memberOwner == msg.sender) {
+            checked = true;
+        }
+        require(checked);
+        uint256 ts = block.timestamp;
+        require(ts > e.startAt);
+        uint256 powerL = astropia.metadataOf(e.leaderId, 0);
+        uint256 powerM = astropia.metadataOf(e.memberId, 0);
+        uint256 progress = (ts - e.startAt) * (powerL + powerM);
+        require(progress >= e.aim);
+
+        // TODO: reward
+
+        e.ongoing = false;
+
+        bytes memory backData = abi.encode(BACK);
+        astropia.safeTransferFrom(address(this), e.leaderOwner, e.leaderId, 1, backData);
+        astropia.safeTransferFrom(address(this), e.memberOwner, e.memberId, 1, backData);
     }
 
 
