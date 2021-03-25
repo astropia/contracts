@@ -104,7 +104,8 @@ contract CardPool_1
         uint256 power = f * uint16(r) / (1 << 16) + f;
 
         require(uint160(power) == power);
-        astropia.updateMetadata(_id, 0, uint160(power));
+        astropia.setOriginMetadata(_id, uint160(power));
+        astropia.updateMetadata(_id, 1, uint160(power));
     }
 
     function _updateCrystalOf (address _player) internal returns (Crystal storage) {

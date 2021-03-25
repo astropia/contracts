@@ -23,6 +23,8 @@ contract Spica is ERC1155TokenReceiver, ERC165
     bytes4 constant private JOIN = 0x725e42cb; // keccak256("JOIN(uint256)")
     bytes4 constant private BACK = 0x2a78c040; // keccak256("BACK()")
 
+    uint256 constant public MAX_EXPLORATION_ROOM_COUNT = 32;
+
     Origin public originLib;
     Astropia public astropia;
 
@@ -34,11 +36,15 @@ contract Spica is ERC1155TokenReceiver, ERC165
         uint256 memberId;
         address memberOwner;
 
+        uint256 hightstIndex;
+
         uint256 aim;
         uint256 startAt;
     }
 
     mapping(uint256 => Exploration) internal _explorations;
+    uint256[] internal _explorationQuery;
+    uint256 internal _tailOfQuery;
 
     constructor(Origin _o, Astropia _a) {
         originLib = _o;
@@ -125,6 +131,14 @@ contract Spica is ERC1155TokenReceiver, ERC165
         revert();
     }
 
+    function pokeRoom(uint256 _eID) external {
+        Exploration storage e = _explorations[_eID];
+        require(e.leaderOwner == msg.sender);
+        require(e.startAt == 0);
+        require(e.hightstIndex + MAX_EXPLORATION_ROOM_COUNT < _pendingExplorations.length);
+
+        _pushExpRoom(e, _eId);
+    }
 
     function end(uint256 _eID) external {
         Exploration storage e = _explorations[_eID];
@@ -166,9 +180,7 @@ contract Spica is ERC1155TokenReceiver, ERC165
         e.leaderOwner = _owner;
         e.aim = _aim;
 
-        // _pendingExplorations[_pendingExplorationsCount] = eId;
-        // _pendingExplorationsIndex[eId] = _pendingExplorationsCount;
-        // _pendingExplorationsCount++;
+        _pushExpRoom(e, eId);
     }
 
     function _joinExploration(address _owner, uint256 _id, uint256 _eId) internal {
@@ -177,16 +189,20 @@ contract Spica is ERC1155TokenReceiver, ERC165
         uint256 leader = e.leaderId;
         require(leader != 0);
         require(leader != _id);
+        require(e.startAt = 0);
 
         e.memberId = _id;
         e.memberOwner = _owner;
         e.salt = originLib.random(abi.encode(leader, _id));
         e.ongoing = true;
         e.startAt = block.timestamp;
+    }
 
-        // uint256 index = _pendingExplorationsIndex[_eId];
-
-        // _pendingExplorationsCount--;
-        // _pendingExplorations[index] = _pendingExplorations[_pendingExplorationsCount];
+    function _pushExpRoom(Exploration storage _e, uint256 _eId) internal {
+        _e.hightstIndex = _pendingExplorations.length;
+        _pendingExplorations.push(_eId);
+        if (_pendingExplorations.length > MAX_EXPLORATION_ROOM_COUNT) {
+            _tailOfQuery = _pendingExplorations.length - MAX_EXPLORATION_ROOM_COUNT
+        }
     }
 }

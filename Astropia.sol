@@ -80,6 +80,8 @@ contract Astropia is ERC1155MixedFungible
 
         _transferNonFungibleToken(address(0), _to, tokenIdWithMiner, 1);
 
+        _metadata[_tokenId][254] = uint160(msg.sender);
+
         emit TransferSingle(msg.sender, address(0), _to, tokenIdWithMiner, 1);
 
         if (_to.isContract()) {
@@ -102,20 +104,32 @@ contract Astropia is ERC1155MixedFungible
         }
     }
 
-    function updateMetadata(uint256 _nftId, uint8 _mIndex, uint160 _data) external onlyInGameZone {
-        require(isNonFungibleItem(_nftId));
-        require(_nfOwners[_nftId] != address(0));
-        mapping (uint8 => uint160) storage metadata = _metadata[_nftId];
-        uint160 senderInNumber = uint160(msg.sender);
-        require(metadata[255] == 0 || metadata[255] == senderInNumber);
-        if (_mIndex == 255) {
-            require(_data == 0 || _data == senderInNumber);
-        }
+    function setOriginMetadata(uint256 _nftId, uint160 _data) external {
+        mapping (uint8 => uint160) storage metadata = _checkMetadata();
+        require(msg.sender == address(metadata[254]));
+        metadata[0] = _data;
+    }
+
+    function setMetadata(uint256 _nftId, uint8 _mIndex, uint160 _data) external onlyInGameZone {
+        require(_mIndex > 0 && _mIndex < 254);
+        mapping (uint8 => uint160) storage metadata = _checkMetadata();
         metadata[_mIndex] = _data;
+    }
+
+    function setLockMetadata(uint256 _nftId, bool _lock) external onlyInGameZone {
+        mapping (uint8 => uint160) storage metadata = _checkMetadata();
+        metadata[255] = _lock ? uint160(msg.sender) : 0;
     }
 
     function allNonFungibleOf(address _owner, uint256 _type) external view returns (uint256[] memory) {
         uint256[] storage tokens = _nft[_owner][_type];
         return tokens;
+    }
+
+    function _checkMetadata(uint256 _nftId) internal returns (mapping (uint8 => uint160) storage metadata) {
+        require(isNonFungibleItem(_nftId));
+        require(_nfOwners[_nftId] != address(0));
+        metadata = _metadata[_nftId];
+        require(metadata[255] == 0 || metadata[255] == uint160(msg.sender));
     }
 }
