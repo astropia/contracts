@@ -105,7 +105,7 @@ contract CardPool_1
 
         require(uint160(power) == power);
         astropia.setOriginMetadata(_id, uint160(power));
-        astropia.updateMetadata(_id, 1, uint160(power));
+        astropia.setMetadata(_id, 1, uint160(power));
     }
 
     function _updateCrystalOf (address _player) internal returns (Crystal storage) {

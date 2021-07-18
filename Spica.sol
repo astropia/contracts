@@ -43,7 +43,7 @@ contract Spica is ERC1155TokenReceiver, ERC165
     }
 
     mapping(uint256 => Exploration) internal _explorations;
-    uint256[] internal _explorationQuery;
+    uint256[] internal _pendingExplorations;
     uint256 internal _tailOfQuery;
 
     constructor(Origin _o, Astropia _a) {
@@ -137,7 +137,7 @@ contract Spica is ERC1155TokenReceiver, ERC165
         require(e.startAt == 0);
         require(e.hightstIndex + MAX_EXPLORATION_ROOM_COUNT < _pendingExplorations.length);
 
-        _pushExpRoom(e, _eId);
+        _pushExpRoom(e, _eID);
     }
 
     function end(uint256 _eID) external {
@@ -189,7 +189,7 @@ contract Spica is ERC1155TokenReceiver, ERC165
         uint256 leader = e.leaderId;
         require(leader != 0);
         require(leader != _id);
-        require(e.startAt = 0);
+        require(e.startAt == 0);
 
         e.memberId = _id;
         e.memberOwner = _owner;
@@ -202,7 +202,7 @@ contract Spica is ERC1155TokenReceiver, ERC165
         _e.hightstIndex = _pendingExplorations.length;
         _pendingExplorations.push(_eId);
         if (_pendingExplorations.length > MAX_EXPLORATION_ROOM_COUNT) {
-            _tailOfQuery = _pendingExplorations.length - MAX_EXPLORATION_ROOM_COUNT
+            _tailOfQuery = _pendingExplorations.length - MAX_EXPLORATION_ROOM_COUNT;
         }
     }
 }

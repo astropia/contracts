@@ -80,7 +80,7 @@ contract Astropia is ERC1155MixedFungible
 
         _transferNonFungibleToken(address(0), _to, tokenIdWithMiner, 1);
 
-        _metadata[_tokenId][254] = uint160(msg.sender);
+        _metadata[tokenIdWithMiner][254] = uint160(msg.sender);
 
         emit TransferSingle(msg.sender, address(0), _to, tokenIdWithMiner, 1);
 
@@ -105,19 +105,19 @@ contract Astropia is ERC1155MixedFungible
     }
 
     function setOriginMetadata(uint256 _nftId, uint160 _data) external {
-        mapping (uint8 => uint160) storage metadata = _checkMetadata();
+        mapping (uint8 => uint160) storage metadata = _checkMetadata(_nftId);
         require(msg.sender == address(metadata[254]));
         metadata[0] = _data;
     }
 
     function setMetadata(uint256 _nftId, uint8 _mIndex, uint160 _data) external onlyInGameZone {
         require(_mIndex > 0 && _mIndex < 254);
-        mapping (uint8 => uint160) storage metadata = _checkMetadata();
+        mapping (uint8 => uint160) storage metadata = _checkMetadata(_nftId);
         metadata[_mIndex] = _data;
     }
 
     function setLockMetadata(uint256 _nftId, bool _lock) external onlyInGameZone {
-        mapping (uint8 => uint160) storage metadata = _checkMetadata();
+        mapping (uint8 => uint160) storage metadata = _checkMetadata(_nftId);
         metadata[255] = _lock ? uint160(msg.sender) : 0;
     }
 
@@ -126,7 +126,7 @@ contract Astropia is ERC1155MixedFungible
         return tokens;
     }
 
-    function _checkMetadata(uint256 _nftId) internal returns (mapping (uint8 => uint160) storage metadata) {
+    function _checkMetadata(uint256 _nftId) internal view returns (mapping (uint8 => uint160) storage metadata) {
         require(isNonFungibleItem(_nftId));
         require(_nfOwners[_nftId] != address(0));
         metadata = _metadata[_nftId];
